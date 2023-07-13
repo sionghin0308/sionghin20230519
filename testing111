@@ -1,0 +1,13 @@
+if not authorized:
+        # send HTTP 401 response to client
+        http_status_code = 401
+        http_reason_phrase = 'Unauthorized'
+        response_headers = [
+            (b"Content-Length", b"0"), # response should contain no content
+            (b"Connection", b"close"), # necessary for closing the connection immediately
+        ]
+        response = f'HTTP/1.1 {http_status_code} {http_reason_phrase}\r\n'
+        response += ''.join([f'{k.decode()}:{v.decode()}\r\n' for k,v in response_headers])
+        response += '\r\n'
+        await websocket.send(response.encode())
+        return
