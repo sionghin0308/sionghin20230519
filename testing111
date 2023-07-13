@@ -1,4 +1,3 @@
-if not authorized:
         # send HTTP 401 response to client
         http_status_code = 401
         http_reason_phrase = 'Unauthorized'
@@ -9,5 +8,12 @@ if not authorized:
         response = f'HTTP/1.1 {http_status_code} {http_reason_phrase}\r\n'
         response += ''.join([f'{k.decode()}:{v.decode()}\r\n' for k,v in response_headers])
         response += '\r\n'
+        await websocket.drain() # clear input buffer
         await websocket.send(response.encode())
+        await websocket.close()
         return
+
+    # upgrade connection to WebSocket protocol
+    await websocket.send(f'HTTP/1.1 101 Switching Protocols\r\n'
+                          f'Upgrade: websocket\r\n'
+                          f'Connection: Upgrade\r\n\r\n'.encode())
