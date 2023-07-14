@@ -1,30 +1,37 @@
-To create a keystore using OpenSSL, you can follow these steps:
+hostname = "example.com"
+port = 443
 
-Generate a private key: Use OpenSSL to generate a private key. You can use the following command to generate a 2048-bit RSA key:
-openssl genrsa -out server.key 2048
+cert_path = "path/to/cert.pem"
+truststore_path = "path/to/truststore.jks"
+truststore_password = "password"
 
+# Create SSL context for a WebSocket connection
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+ssl_context.load_cert_chain(certfile=cert_path, password=truststore_password)
+ssl_context.load_verify_locations(cafile=truststore_path, password=truststore_password)
 
-This will generate a private key in PEM format and save it to a file named server.key.
-
-Generate a Certificate Signing Request (CSR): Use OpenSSL to generate a CSR, which you will use to obtain a certificate from a Certificate Authority (CA). You can use the following command:
-openssl req -new -key server.key -out server.csr
-
-
-This will generate a CSR in PEM format and save it to a file named server.csr. You will be prompted to enter information such as your country, state, and organization.
-
-Obtain a certificate from a CA: Use the CSR to obtain a certificate from a trusted CA, such as Let's Encrypt or a commercial CA. Follow the CA's instructions to obtain the certificate and save it to a file in PEM format.
-
-Create the keystore: Once you have the private key and certificate, you can create a keystore file using OpenSSL. You can use the following command:
-
-openssl pkcs12 -export -in server.crt -inkey server.key -out server.p12 -name server
+# Create WebSocket connection with SSL context
+url = f"wss://{hostname}:{port}/websocket"
+ws = websocket.WebSocketApp(url, on_message=on_message, on_error=on_error, on_close=on_close)
+ws.on_open = on_open
+ws.run_forever(sslopt={"cert_reqs": ssl.CERT_REQUIRED, "ssl_context": ssl_context})
 
 
-This command exports the private key and the certificate to a PKCS12 file named server.p12, which you can use as your keystore. You will be prompted to enter a password for the keystore.
-
-Convert the keystore to JKS format: Many Java applications and servers require keystore files in JKS (Java KeyStore) format. You can convert the PKCS12 keystore to JKS format using the keytool utility that comes with the Java Development Kit (JDK). You can use the following command:
-keytool -importkeystore -srckeystore server.p12 -srcstoretype PKCS12 -destkeystore server.jks -deststoretype JKS
 
 
-This command imports the PKCS12 keystore to a JKS keystore named server.jks. You will be prompted to enter the passwords for the PKCS12 keystore and the JKS keystore.
 
-With these steps, you have now created a keystore using OpenSSL and converted it to JKS format, which you can use in your Java applications and servers to enable SSL/TLS encryption.
+import ssl
+import socket
+
+hostname = 'example.com'
+port = 443
+
+# Create a connection to the website
+with socket.create_connection((hostname, port)) as sock:
+    # Wrap the socket in an SSL socket
+    with ssl.create_default_context().wrap_socket(sock, server_hostname=hostname) as sslsock:
+        # Get the server's SSL certificate chain
+        cert_chain = sslsock.getpeercert(chain=True)
+
+# Print the path to the certificate file
+print(cert_chain[0][1])
