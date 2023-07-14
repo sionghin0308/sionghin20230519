@@ -1,13 +1,9 @@
-hostname = "example.com"
-port = 443
-truststore_path = "path/to/truststore.jks"
-truststore_password = "password"
+# Create SSL context
+context = ssl.SSLContext()
+context.check_hostname = False # Set to true if you want to validate hostname
+context.verify_mode = ssl.CERT_REQUIRED
+context.load_default_certs() # Load system CAs
 
-# Create an SSL context and load the truststore file
-ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-ssl_context.load_verify_locations(cafile=truststore_path, password=truststore_password)
-
-# Create WebSocket connection with SSL context
-url = f"wss://{hostname}:{port}/websocket"
-ws = websocket.WebSocketApp(url, sslopt={"ssl_version": ssl.PROTOCOL_TLSv1_2, "cert_reqs": ssl.CERT_REQUIRED, "ssl_context": ssl_context})
-ws.run_forever()
+# Create WebSocket connection
+ws = websocket.WebSocket(sslopt={"ssl_version": ssl.PROTOCOL_TLSv1_2, "cert_reqs": ssl.CERT_REQUIRED, "ssl_context": context}, 
+                          url=host)
